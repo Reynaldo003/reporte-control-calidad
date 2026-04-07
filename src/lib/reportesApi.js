@@ -1,6 +1,8 @@
 const API_BASE = (
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
-).replace(/\/+$/, "");
+  import.meta.env.VITE_API_URL || "https://crm.grupoautomotrizryr.com"
+)
+  // import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
+  .replace(/\/+$/, "");
 
 function limpiarTexto(valor) {
   return String(valor || "").trim();
@@ -43,6 +45,7 @@ function obtenerMensajeError(payload) {
 
   if (typeof payload === "string") return payload;
 
+  if (payload.detail) return payload.detail;
   if (payload.message) return payload.message;
 
   if (typeof payload === "object") {
@@ -97,7 +100,16 @@ export async function crearReporteCalidad(formulario) {
     body: formData,
   });
 
-  const data = await response.json().catch(() => ({}));
+  const contentType = response.headers.get("content-type") || "";
+  let data = {};
+
+  try {
+    data = contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
+  } catch {
+    data = {};
+  }
 
   if (!response.ok) {
     throw new Error(obtenerMensajeError(data));
@@ -111,7 +123,16 @@ export async function obtenerReportesSafety() {
     method: "GET",
   });
 
-  const data = await response.json().catch(() => []);
+  const contentType = response.headers.get("content-type") || "";
+  let data = [];
+
+  try {
+    data = contentType.includes("application/json")
+      ? await response.json()
+      : [];
+  } catch {
+    data = [];
+  }
 
   if (!response.ok) {
     throw new Error(obtenerMensajeError(data));

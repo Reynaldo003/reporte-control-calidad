@@ -435,9 +435,13 @@ export default function ReporteCalidadApp() {
     try {
       setEnviando(true);
       await crearReporteCalidad(formulario);
+
       setGuardado(true);
       setMensaje("Reporte guardado correctamente.");
+
       localStorage.removeItem(STORAGE_KEY);
+      setErrores({});
+      setFormulario(crearEstadoInicial());
     } catch (error) {
       console.error(error);
       setMensaje(error.message || "No fue posible guardar el reporte.");
