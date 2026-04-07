@@ -1,3 +1,4 @@
+//src/data/reporteCalidadData.js
 export const PRIORIDADES_REPORTE = [
   { value: "baja", label: "Baja" },
   { value: "media", label: "Media" },

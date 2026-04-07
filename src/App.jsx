@@ -37,17 +37,12 @@ function hoy() {
 function crearEstadoInicial() {
   return {
     reportante: "",
-    sede: "",
-    area: "",
-    tipo_reporte: "control_calidad",
-    prioridad: "media",
+    sede: DEALER[0]?.value || "",
     fecha_reporte: hoy(),
     nombre_cliente: "",
     orden_servicio: "",
     tecnico_reparo: "",
     valido_control_calidad: "",
-    kilometraje: "",
-    resumen: "",
     checklist: crearChecklistInicial(),
     adjuntos_generales: [],
     comentarios_finales: "",
@@ -376,6 +371,10 @@ export default function ReporteCalidadApp() {
 
     if (!formulario.reportante.trim()) {
       nuevosErrores.reportante = "Ingresa el nombre de quien levanta el reporte.";
+    }
+
+    if (!formulario.sede.trim()) {
+      nuevosErrores.agencia = "Selecciona la agencia.";
     }
 
     if (!formulario.nombre_cliente.trim()) {
