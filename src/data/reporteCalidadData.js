@@ -24,6 +24,11 @@ export const TECNICO = [
   { value: "VICTOR VAZQUEZ", label: "Victor Vazquez" },
 ];
 
+export const VALIDA = [
+  { value: "SI", label: "Si" },
+  { value: "NO", label: "No" },
+];
+
 export const TIPOS_REPORTE = [
   { value: "control_calidad", label: "Control de calidad" },
   { value: "seguridad", label: "Seguridad" },

@@ -16,6 +16,7 @@ import {
   ESTADOS_REVISION,
   DEALER,
   TECNICO,
+  VALIDA,
 } from "./data/reporteCalidadData";
 import { crearReporteCalidad } from "./lib/reportesApi";
 
@@ -67,7 +68,7 @@ function normalizarItemChecklist(item = {}) {
 
 function crearEstadoInicial() {
   return {
-    reportante: TECNICO[0]?.value || "",
+    reportante: "",
     sede: DEALER[0]?.value || "",
     fecha_reporte: hoy(),
     nombre_cliente: "",
@@ -600,12 +601,12 @@ export default function ReporteCalidadApp() {
             <form onSubmit={enviarReporte} className="space-y-8">
               <section className="rounded-lg border border-white/10 bg-white/5 p-4 sm:p-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  <CampoSelect
+                  <CampoTexto
                     label="Reportante"
                     requerido
                     value={formulario.reportante}
                     onChange={(valor) => actualizarCampo("reportante", valor)}
-                    opciones={TECNICO}
+                    placeholder="Nombre de quien reporta"
                     error={errores.reportante}
                   />
 
@@ -647,23 +648,23 @@ export default function ReporteCalidadApp() {
                     error={errores.orden_servicio}
                   />
 
-                  <CampoTexto
+                  <CampoSelect
                     label="Técnico que reparó"
                     requerido
                     value={formulario.tecnico_reparo}
                     onChange={(valor) => actualizarCampo("tecnico_reparo", valor)}
-                    placeholder="Nombre del técnico"
+                    opciones={TECNICO}
                     error={errores.tecnico_reparo}
                   />
 
-                  <CampoTexto
+                  <CampoSelect
                     label="Validó control de calidad"
                     requerido
                     value={formulario.valido_control_calidad}
                     onChange={(valor) =>
                       actualizarCampo("valido_control_calidad", valor)
                     }
-                    placeholder="Nombre del responsable"
+                    opciones={VALIDA}
                     error={errores.valido_control_calidad}
                   />
                 </div>
