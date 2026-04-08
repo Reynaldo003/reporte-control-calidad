@@ -4,56 +4,139 @@ import {
   Camera,
   CheckCircle2,
   ClipboardList,
-  FileText,
   Paperclip,
   Send,
-  ShieldCheck,
   Trash2,
   Upload,
-  UserRound,
   Video,
-  Wrench,
 } from "lucide-react";
 import fondo3 from "./assets/fondo3.jpg";
 import {
   crearChecklistInicial,
   ESTADOS_REVISION,
-  PRIORIDADES_REPORTE,
   DEALER,
-  TIPOS_REPORTE,
+  TECNICO,
 } from "./data/reporteCalidadData";
 import { crearReporteCalidad } from "./lib/reportesApi";
 
-const STORAGE_KEY = "reporte-calidad-mobile-v1";
+const STORAGE_KEY = "reporte-calidad-mobile-v2";
 
 function cls(...clases) {
   return clases.filter(Boolean).join(" ");
 }
 
 function hoy() {
-  return new Date().toISOString().slice(0, 10);
+  const ahora = new Date();
+  const local = new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
 }
 
-function crearEstadoInicial() {
-  return {
-    reportante: "",
-    sede: DEALER[0]?.value || "",
-    fecha_reporte: hoy(),
-    nombre_cliente: "",
-    orden_servicio: "",
-    tecnico_reparo: "",
-    valido_control_calidad: "",
-    checklist: crearChecklistInicial(),
-    adjuntos_generales: [],
-    comentarios_finales: "",
-  };
+function limpiarTexto(valor) {
+  return String(valor ?? "").trim();
+}
+
+function asegurarArreglo(valor) {
+  return Array.isArray(valor) ? valor : [];
 }
 
 function formatearTamano(bytes) {
   if (!bytes) return "0 KB";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function normalizarItemChecklist(item = {}) {
+  return {
+    id: limpiarTexto(item.id),
+    titulo: limpiarTexto(item.titulo),
+    descripcion: limpiarTexto(item.descripcion),
+    permiteNoAplica: Boolean(
+      item.permiteNoAplica ?? item.permite_no_aplica ?? false,
+    ),
+    estado: limpiarTexto(item.estado).toLowerCase(),
+    observaciones: limpiarTexto(item.observaciones),
+    fotos: asegurarArreglo(item.fotos),
+    videos: asegurarArreglo(item.videos),
+    archivos: asegurarArreglo(item.archivos),
+  };
+}
+
+function crearEstadoInicial() {
+  return {
+    reportante: TECNICO[0]?.value || "",
+    sede: DEALER[0]?.value || "",
+    fecha_reporte: hoy(),
+    nombre_cliente: "",
+    orden_servicio: "",
+    tecnico_reparo: "",
+    valido_control_calidad: "",
+    checklist: crearChecklistInicial().map(normalizarItemChecklist),
+    adjuntos_generales: [],
+    comentarios_finales: "",
+  };
+}
+
+function serializarBorrador(formulario) {
+  return {
+    reportante: formulario.reportante || "",
+    sede: formulario.sede || "",
+    fecha_reporte: formulario.fecha_reporte || hoy(),
+    nombre_cliente: formulario.nombre_cliente || "",
+    orden_servicio: formulario.orden_servicio || "",
+    tecnico_reparo: formulario.tecnico_reparo || "",
+    valido_control_calidad: formulario.valido_control_calidad || "",
+    comentarios_finales: formulario.comentarios_finales || "",
+    checklist: asegurarArreglo(formulario.checklist).map((item) => ({
+      id: limpiarTexto(item.id),
+      titulo: limpiarTexto(item.titulo),
+      descripcion: limpiarTexto(item.descripcion),
+      permiteNoAplica: Boolean(
+        item.permiteNoAplica ?? item.permite_no_aplica ?? false,
+      ),
+      estado: limpiarTexto(item.estado).toLowerCase(),
+      observaciones: limpiarTexto(item.observaciones),
+    })),
+  };
+}
+
+function hidratarBorrador(data = {}) {
+  const base = crearEstadoInicial();
+
+  return {
+    ...base,
+    ...data,
+    checklist: asegurarArreglo(data.checklist).length
+      ? data.checklist.map(normalizarItemChecklist)
+      : base.checklist,
+    adjuntos_generales: [],
+  };
+}
+
+function unirArchivosSinDuplicar(actuales = [], nuevos = []) {
+  const mapa = new Map();
+
+  [...asegurarArreglo(actuales), ...asegurarArreglo(nuevos)].forEach((archivo) => {
+    if (!(archivo instanceof File)) return;
+
+    const llave = `${archivo.name}-${archivo.size}-${archivo.lastModified}`;
+    if (!mapa.has(llave)) {
+      mapa.set(llave, archivo);
+    }
+  });
+
+  return Array.from(mapa.values());
+}
+
+function totalEvidenciasDeItem(item) {
+  return (
+    asegurarArreglo(item.fotos).length +
+    asegurarArreglo(item.videos).length +
+    asegurarArreglo(item.archivos).length
+  );
 }
 
 function EtiquetaCampo({ children, requerido = false }) {
@@ -83,10 +166,10 @@ function CampoTexto({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={cls(
-          "w-full rounded-2xl border bg-white/10 px-4 py-3 text-white outline-none transition placeholder:text-white/50",
+          "w-full rounded-lg border bg-white/10 px-4 py-3 text-white outline-none transition placeholder:text-white/50",
           error
             ? "border-red-300 focus:border-red-300"
-            : "border-white/10 focus:border-white/30"
+            : "border-white/10 focus:border-white/30",
         )}
       />
       {error ? <p className="mt-2 text-sm text-red-200">{error}</p> : null}
@@ -109,14 +192,18 @@ function CampoSelect({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cls(
-          "w-full rounded-2xl border bg-white/10 px-4 py-3 text-white outline-none transition",
+          "w-full rounded-lg border bg-white/10 px-4 py-3 text-white outline-none transition",
           error
             ? "border-red-300 focus:border-red-300"
-            : "border-white/10 focus:border-white/30"
+            : "border-white/10 focus:border-white/30",
         )}
       >
         {opciones.map((opcion) => (
-          <option key={opcion.value} value={opcion.value} className="text-slate-900">
+          <option
+            key={opcion.value}
+            value={opcion.value}
+            className="text-slate-900"
+          >
             {opcion.label}
           </option>
         ))}
@@ -144,10 +231,10 @@ function CampoTextarea({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={cls(
-          "w-full resize-none rounded-2xl border bg-white/10 px-4 py-3 text-white outline-none transition placeholder:text-white/50",
+          "w-full resize-none rounded-lg border bg-white/10 px-4 py-3 text-white outline-none transition placeholder:text-white/50",
           error
             ? "border-red-300 focus:border-red-300"
-            : "border-white/10 focus:border-white/30"
+            : "border-white/10 focus:border-white/30",
         )}
       />
       {error ? <p className="mt-2 text-sm text-red-200">{error}</p> : null}
@@ -158,7 +245,7 @@ function CampoTextarea({
 function ListaArchivos({ archivos, onEliminar, tono = "normal" }) {
   if (!archivos.length) {
     return (
-      <div className="rounded-2xl border border-dashed border-white/10 px-4 py-3 text-sm text-white/60">
+      <div className="rounded-lg border border-dashed border-white/10 px-4 py-3 text-sm text-white/60">
         Sin archivos cargados.
       </div>
     );
@@ -168,25 +255,27 @@ function ListaArchivos({ archivos, onEliminar, tono = "normal" }) {
     <div className="space-y-2">
       {archivos.map((archivo, indice) => (
         <div
-          key={`${archivo.name}-${indice}`}
+          key={`${archivo.name}-${archivo.size}-${archivo.lastModified}-${indice}`}
           className={cls(
-            "flex items-center justify-between gap-3 rounded-2xl border px-3 py-3",
+            "flex items-center justify-between gap-3 rounded-lg border px-3 py-3",
             tono === "alerta"
               ? "border-red-300/20 bg-red-500/5"
-              : "border-white/10 bg-white/5"
+              : "border-white/10 bg-white/5",
           )}
         >
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-white">
               {archivo.name}
             </p>
-            <p className="text-xs text-white/60">{formatearTamano(archivo.size)}</p>
+            <p className="text-xs text-white/60">
+              {formatearTamano(archivo.size)}
+            </p>
           </div>
 
           <button
             type="button"
             onClick={() => onEliminar(indice)}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-red-500/15"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white transition hover:bg-red-500/15"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -196,11 +285,31 @@ function ListaArchivos({ archivos, onEliminar, tono = "normal" }) {
   );
 }
 
-function BotonCarga({ icono, texto, accept, capture, multiple = true, onChange }) {
+function GrupoArchivos({ titulo, archivos, onEliminar, tono = "normal" }) {
+  if (!archivos.length) return null;
+
+  return (
+    <div>
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/70">
+        {titulo} ({archivos.length})
+      </div>
+      <ListaArchivos archivos={archivos} onEliminar={onEliminar} tono={tono} />
+    </div>
+  );
+}
+
+function BotonCarga({
+  icono,
+  texto,
+  accept,
+  capture,
+  multiple = true,
+  onChange,
+}) {
   const Icono = icono;
 
   return (
-    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
+    <label className="inline-flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10 active:scale-[0.99]">
       <Icono className="h-4 w-4" />
       {texto}
       <input
@@ -225,14 +334,14 @@ function TarjetaResumen({ icono, titulo, valor, tono = "normal" }) {
   return (
     <div
       className={cls(
-        "rounded-3xl border p-4",
+        "rounded-lg border p-4",
         tono === "alerta"
           ? "border-red-300/20 bg-red-500/10"
-          : "border-white/10 bg-white/5"
+          : "border-white/10 bg-white/5",
       )}
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-white">
+        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white/10 text-white">
           <Icono className="h-5 w-5" />
         </div>
         <div>
@@ -240,6 +349,14 @@ function TarjetaResumen({ icono, titulo, valor, tono = "normal" }) {
           <p className="text-xl font-bold text-white">{valor}</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ChipConteo({ label, value }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-white">
+      {label}: {value}
     </div>
   );
 }
@@ -257,36 +374,33 @@ export default function ReporteCalidadApp() {
 
     try {
       const datos = JSON.parse(guardadoLocal);
-      setFormulario({
-        ...crearEstadoInicial(),
-        ...datos,
-        checklist: (datos.checklist || []).length
-          ? datos.checklist.map((item) => ({
-            ...item,
-            fotos: item.fotos || [],
-            videos: item.videos || [],
-            archivos: item.archivos || [],
-          }))
-          : crearChecklistInicial(),
-      });
+      setFormulario(hidratarBorrador(datos));
     } catch (error) {
       console.error("No se pudo restaurar el borrador:", error);
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(formulario));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(serializarBorrador(formulario)),
+    );
   }, [formulario]);
 
   const resumen = useMemo(() => {
     const totalItems = formulario.checklist.length;
     const contestados = formulario.checklist.filter((item) => item.estado).length;
-    const noConformes = formulario.checklist.filter((item) => item.estado === "no").length;
-    const totalEvidencias = formulario.checklist.reduce(
-      (acc, item) =>
-        acc + item.fotos.length + item.videos.length + item.archivos.length,
-      0
-    ) + formulario.adjuntos_generales.length;
+    const noConformes = formulario.checklist.filter(
+      (item) => item.estado === "no",
+    ).length;
+
+    const totalEvidenciasPuntos = formulario.checklist.reduce(
+      (acc, item) => acc + totalEvidenciasDeItem(item),
+      0,
+    );
+
+    const totalEvidencias =
+      totalEvidenciasPuntos + asegurarArreglo(formulario.adjuntos_generales).length;
 
     return {
       totalItems,
@@ -308,7 +422,7 @@ export default function ReporteCalidadApp() {
     setFormulario((prev) => ({
       ...prev,
       checklist: prev.checklist.map((item) =>
-        item.id === itemId ? { ...item, ...cambios } : item
+        item.id === itemId ? { ...item, ...cambios } : item,
       ),
     }));
   }
@@ -321,7 +435,7 @@ export default function ReporteCalidadApp() {
 
         return {
           ...item,
-          [tipo]: [...item[tipo], ...archivosNuevos],
+          [tipo]: unirArchivosSinDuplicar(item[tipo], archivosNuevos),
         };
       }),
     }));
@@ -335,7 +449,9 @@ export default function ReporteCalidadApp() {
 
         return {
           ...item,
-          [tipo]: item[tipo].filter((_, indice) => indice !== indiceArchivo),
+          [tipo]: asegurarArreglo(item[tipo]).filter(
+            (_, indice) => indice !== indiceArchivo,
+          ),
         };
       }),
     }));
@@ -344,22 +460,24 @@ export default function ReporteCalidadApp() {
   function agregarAdjuntosGenerales(archivosNuevos) {
     setFormulario((prev) => ({
       ...prev,
-      adjuntos_generales: [...prev.adjuntos_generales, ...archivosNuevos],
+      adjuntos_generales: unirArchivosSinDuplicar(
+        prev.adjuntos_generales,
+        archivosNuevos,
+      ),
     }));
   }
 
   function eliminarAdjuntoGeneral(indiceArchivo) {
     setFormulario((prev) => ({
       ...prev,
-      adjuntos_generales: prev.adjuntos_generales.filter(
-        (_, indice) => indice !== indiceArchivo
+      adjuntos_generales: asegurarArreglo(prev.adjuntos_generales).filter(
+        (_, indice) => indice !== indiceArchivo,
       ),
     }));
   }
 
   function limpiarFormulario() {
-    const nuevoEstado = crearEstadoInicial();
-    setFormulario(nuevoEstado);
+    setFormulario(crearEstadoInicial());
     setErrores({});
     setMensaje("");
     setGuardado(false);
@@ -369,27 +487,31 @@ export default function ReporteCalidadApp() {
   function validarFormulario() {
     const nuevosErrores = {};
 
-    if (!formulario.reportante.trim()) {
+    if (!limpiarTexto(formulario.reportante)) {
       nuevosErrores.reportante = "Ingresa el nombre de quien levanta el reporte.";
     }
 
-    if (!formulario.sede.trim()) {
+    if (!limpiarTexto(formulario.sede)) {
       nuevosErrores.agencia = "Selecciona la agencia.";
     }
 
-    if (!formulario.nombre_cliente.trim()) {
+    if (!limpiarTexto(formulario.fecha_reporte)) {
+      nuevosErrores.fecha_reporte = "Selecciona la fecha del reporte.";
+    }
+
+    if (!limpiarTexto(formulario.nombre_cliente)) {
       nuevosErrores.nombre_cliente = "Ingresa el nombre del cliente.";
     }
 
-    if (!formulario.orden_servicio.trim()) {
+    if (!limpiarTexto(formulario.orden_servicio)) {
       nuevosErrores.orden_servicio = "Ingresa la orden de servicio.";
     }
 
-    if (!formulario.tecnico_reparo.trim()) {
+    if (!limpiarTexto(formulario.tecnico_reparo)) {
       nuevosErrores.tecnico_reparo = "Ingresa el técnico que reparó.";
     }
 
-    if (!formulario.valido_control_calidad.trim()) {
+    if (!limpiarTexto(formulario.valido_control_calidad)) {
       nuevosErrores.valido_control_calidad =
         "Ingresa quién validó el control de calidad.";
     }
@@ -407,7 +529,7 @@ export default function ReporteCalidadApp() {
         return;
       }
 
-      if (item.estado === "no" && !item.observaciones.trim()) {
+      if (item.estado === "no" && !limpiarTexto(item.observaciones)) {
         erroresChecklist[item.id] =
           "Cuando el resultado es No debes escribir observaciones.";
       }
@@ -459,7 +581,7 @@ export default function ReporteCalidadApp() {
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
         <div
-          className="overflow-hidden rounded-[28px] border border-white/10 shadow-[0_30px_80px_-25px_rgba(19,30,92,0.30)]"
+          className="overflow-hidden rounded-4xl border border-white/10 shadow-[0_30px_80px_-25px_rgba(19,30,92,0.30)]"
           style={{
             backgroundImage: `linear-gradient(rgba(10,19,55,0.40), rgba(10,19,55,0.50)), url(${fondo3})`,
             backgroundSize: "cover",
@@ -467,26 +589,23 @@ export default function ReporteCalidadApp() {
           }}
         >
           <div className="p-4 sm:p-6 lg:p-8">
-            <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="mb-6 flex flex-col gap-4">
               <div>
-                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-white">
-                  Control de calidad
-                </span>
 
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                  Levantamiento de reporte de control de calidad
+                  Reporte de control de calidad
                 </h1>
               </div>
             </div>
             <form onSubmit={enviarReporte} className="space-y-8">
-              <section className="rounded-[28px] border border-white/10 bg-white/5 p-4 sm:p-6">
+              <section className="rounded-lg border border-white/10 bg-white/5 p-4 sm:p-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  <CampoTexto
+                  <CampoSelect
                     label="Reportante"
                     requerido
                     value={formulario.reportante}
                     onChange={(valor) => actualizarCampo("reportante", valor)}
-                    placeholder="Nombre completo"
+                    opciones={TECNICO}
                     error={errores.reportante}
                   />
 
@@ -496,16 +615,20 @@ export default function ReporteCalidadApp() {
                     value={formulario.sede}
                     onChange={(valor) => actualizarCampo("sede", valor)}
                     opciones={DEALER}
+                    error={errores.agencia}
                   />
+
                   <CampoTexto
                     label="Fecha del reporte"
                     requerido
                     type="date"
                     value={formulario.fecha_reporte}
                     onChange={(valor) => actualizarCampo("fecha_reporte", valor)}
+                    error={errores.fecha_reporte}
                   />
                 </div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 mt-4">
+
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                   <CampoTexto
                     label="Nombre del cliente"
                     requerido
@@ -523,6 +646,7 @@ export default function ReporteCalidadApp() {
                     placeholder="OS-000123"
                     error={errores.orden_servicio}
                   />
+
                   <CampoTexto
                     label="Técnico que reparó"
                     requerido
@@ -545,27 +669,40 @@ export default function ReporteCalidadApp() {
                 </div>
               </section>
 
-              <section className="rounded-[28px] border border-white/10 bg-white/5 p-4 sm:p-6">
+              <section className="rounded-lg border border-white/10 bg-white/5 p-4 sm:p-6">
+                <div className="mb-4">
+                  <h2 className="text-xl font-semibold text-white">
+                    Checklist y evidencias por punto
+                  </h2>
+                  <p className="mt-1 text-sm text-white/70">
+                    Cada punto puede llevar sus propias fotos, videos o archivos.
+                  </p>
+                </div>
+
                 <div className="space-y-4">
                   {formulario.checklist.map((item, indice) => {
                     const errorItem = errores.checklist?.[item.id] || "";
                     const tonoAlerta = item.estado === "no" || Boolean(errorItem);
+                    const totalItem = totalEvidenciasDeItem(item);
 
                     return (
                       <article
                         key={item.id}
                         className={cls(
-                          "rounded-[26px] border p-4 sm:p-5",
+                          "rounded-lg border p-4 sm:p-5",
                           tonoAlerta
                             ? "border-red-300/20 bg-red-500/5"
-                            : "border-white/10 bg-white/5"
+                            : "border-white/10 bg-white/5",
                         )}
                       >
-                        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                          <div>
-                            <div className="mb-2 inline-flex items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-white">
+                        <div className="mb-4 flex flex-col gap-3">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="inline-flex items-center rounded-lg border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-white">
                               Punto {indice + 1}
                             </div>
+                          </div>
+
+                          <div>
                             <h3 className="text-lg font-semibold text-white">
                               {item.titulo}
                             </h3>
@@ -576,7 +713,7 @@ export default function ReporteCalidadApp() {
 
                           <div className="flex flex-wrap gap-2">
                             {ESTADOS_REVISION.filter((estado) =>
-                              estado.value === "na" ? item.permiteNoAplica : true
+                              estado.value === "na" ? item.permiteNoAplica : true,
                             ).map((estado) => (
                               <button
                                 key={estado.value}
@@ -585,12 +722,12 @@ export default function ReporteCalidadApp() {
                                   actualizarItem(item.id, { estado: estado.value })
                                 }
                                 className={cls(
-                                  "rounded-2xl border px-4 py-2 text-sm font-semibold transition",
+                                  "rounded-lg border px-4 py-2 text-sm font-semibold transition",
                                   item.estado === estado.value
                                     ? estado.value === "no"
                                       ? "border-red-300 bg-red-500/20 text-white"
                                       : "border-white bg-white text-[#131e5c]"
-                                    : "border-white/10 bg-white/5 text-white hover:bg-white/10"
+                                    : "border-white/10 bg-white/5 text-white hover:bg-white/10",
                                 )}
                               >
                                 {estado.label}
@@ -600,21 +737,114 @@ export default function ReporteCalidadApp() {
                         </div>
 
                         {errorItem ? (
-                          <div className="mb-4 rounded-2xl border border-red-300/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                          <div className="mb-4 rounded-lg border border-red-300/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
                             {errorItem}
                           </div>
                         ) : null}
 
-                        <div>
-                          <CampoTextarea
-                            label="Observaciones"
-                            value={item.observaciones}
-                            onChange={(valor) =>
-                              actualizarItem(item.id, { observaciones: valor })
-                            }
-                            placeholder="Detalle del hallazgo, condición observada, acción requerida o evidencia relevante."
-                            rows={5}
-                          />
+                        <CampoTextarea
+                          label="Observaciones"
+                          value={item.observaciones}
+                          onChange={(valor) =>
+                            actualizarItem(item.id, { observaciones: valor })
+                          }
+                          placeholder="Detalle del hallazgo, condición observada, acción requerida o evidencia relevante."
+                          rows={5}
+                        />
+
+                        <div className="mt-5 rounded-lg border border-white/10 bg-[#0e173f]/40 p-4">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <h4 className="text-sm font-semibold text-white">
+                                Evidencias del punto
+                              </h4>
+                            </div>
+
+                            {item.estado === "no" ? (
+                              <div className="text-xs font-semibold text-red-200">
+                                Recomendado adjuntar evidencia del hallazgo
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            <BotonCarga
+                              icono={Camera}
+                              texto="Tomar foto"
+                              accept="image/*"
+                              capture="environment"
+                              multiple={false}
+                              onChange={(archivos) =>
+                                agregarArchivosAItem(item.id, "fotos", archivos)
+                              }
+                            />
+
+                            <BotonCarga
+                              icono={Camera}
+                              texto="Subir foto"
+                              accept="image/*"
+                              onChange={(archivos) =>
+                                agregarArchivosAItem(item.id, "fotos", archivos)
+                              }
+                            />
+
+                            <BotonCarga
+                              icono={Video}
+                              texto="Tomar video"
+                              accept="video/*"
+                              capture="environment"
+                              multiple={false}
+                              onChange={(archivos) =>
+                                agregarArchivosAItem(item.id, "videos", archivos)
+                              }
+                            />
+
+                            <BotonCarga
+                              icono={Paperclip}
+                              texto="Subir archivo"
+                              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.mp4,.mov,.webm"
+                              onChange={(archivos) =>
+                                agregarArchivosAItem(item.id, "archivos", archivos)
+                              }
+                            />
+                          </div>
+
+                          <div className="mt-4 space-y-3">
+                            {totalItem === 0 ? (
+                              <div className="rounded-lg border border-dashed border-white/10 px-4 py-3 text-sm text-white/60">
+                                Aún no hay evidencias en este punto.
+                              </div>
+                            ) : (
+                              <>
+                                <GrupoArchivos
+                                  titulo="Fotos"
+                                  archivos={item.fotos}
+                                  tono={tonoAlerta ? "alerta" : "normal"}
+                                  onEliminar={(indice) =>
+                                    eliminarArchivoDeItem(item.id, "fotos", indice)
+                                  }
+                                />
+
+                                <GrupoArchivos
+                                  titulo="Videos"
+                                  archivos={item.videos}
+                                  tono={tonoAlerta ? "alerta" : "normal"}
+                                  onEliminar={(indice) =>
+                                    eliminarArchivoDeItem(item.id, "videos", indice)
+                                  }
+                                />
+
+                                <GrupoArchivos
+                                  titulo="Archivos"
+                                  archivos={item.archivos}
+                                  tono={tonoAlerta ? "alerta" : "normal"}
+                                  onEliminar={(indice) =>
+                                    eliminarArchivoDeItem(item.id, "archivos", indice)
+                                  }
+                                />
+                              </>
+                            )}
+                          </div>
                         </div>
                       </article>
                     );
@@ -622,38 +852,51 @@ export default function ReporteCalidadApp() {
                 </div>
               </section>
 
-              <section className="rounded-[28px] border border-white/10 bg-white/5 p-4 sm:p-6">
+              <section className="rounded-lg border border-white/10 bg-white/5 p-4 sm:p-6">
                 <div className="mb-5 flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-white">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 text-white">
                     <Upload className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-white">Adjuntos generales</h2>
+                    <h2 className="text-xl font-semibold text-white">
+                      Adjuntos generales
+                    </h2>
                     <p className="text-sm text-white/70">
                       Evidencias que aplican al reporte completo.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <BotonCarga
                     icono={Camera}
                     texto="Foto general"
                     accept="image/*"
                     capture="environment"
+                    multiple={false}
                     onChange={agregarAdjuntosGenerales}
                   />
+
+                  <BotonCarga
+                    icono={Camera}
+                    texto="Subir foto"
+                    accept="image/*"
+                    onChange={agregarAdjuntosGenerales}
+                  />
+
                   <BotonCarga
                     icono={Video}
                     texto="Video general"
                     accept="video/*"
                     capture="environment"
+                    multiple={false}
                     onChange={agregarAdjuntosGenerales}
                   />
+
                   <BotonCarga
                     icono={Paperclip}
                     texto="Archivo general"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.mp4,.mov"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.mp4,.mov,.webm"
                     onChange={agregarAdjuntosGenerales}
                   />
                 </div>
@@ -664,7 +907,6 @@ export default function ReporteCalidadApp() {
                     onEliminar={eliminarAdjuntoGeneral}
                   />
                 </div>
-
                 <div className="mt-4">
                   <CampoTextarea
                     label="Comentarios finales"
@@ -681,49 +923,62 @@ export default function ReporteCalidadApp() {
               {mensaje ? (
                 <div
                   className={cls(
-                    "rounded-2xl border px-4 py-3 text-sm",
+                    "rounded-lg border px-4 py-3 text-sm",
                     guardado
                       ? "border-emerald-300/20 bg-emerald-500/10 text-emerald-100"
-                      : "border-red-300/20 bg-red-500/10 text-red-100"
+                      : "border-red-300/20 bg-red-500/10 text-red-100",
                   )}
                 >
                   {mensaje}
                 </div>
               ) : null}
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={limpiarFormulario}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Limpiar
-                  </button>
+              <div className="sticky bottom-3 z-20">
+                <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-[#0b1438]/90 p-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-sm text-white/75">
+                    Pendientes:{" "}
+                    <span className="font-semibold text-white">
+                      {resumen.pendientes}
+                    </span>{" "}
+                    · Evidencias:{" "}
+                    <span className="font-semibold text-white">
+                      {resumen.totalEvidencias}
+                    </span>
+                  </div>
 
-                  <button
-                    type="submit"
-                    disabled={enviando}
-                    className={cls(
-                      "inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition",
-                      enviando
-                        ? "cursor-not-allowed bg-white/40 text-white"
-                        : "bg-white text-[#131e5c] hover:bg-white/90"
-                    )}
-                  >
-                    {enviando ? (
-                      <>
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#131e5c]/30 border-t-[#131e5c]" />
-                        Guardando...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4" />
-                        Enviar reporte
-                      </>
-                    )}
-                  </button>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={limpiarFormulario}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Limpiar
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={enviando}
+                      className={cls(
+                        "inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition",
+                        enviando
+                          ? "cursor-not-allowed bg-white/40 text-white"
+                          : "bg-white text-[#131e5c] hover:bg-white/90",
+                      )}
+                    >
+                      {enviando ? (
+                        <>
+                          <span className="h-4 w-4 animate-spin rounded-lg border-2 border-[#131e5c]/30 border-t-[#131e5c]" />
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4" />
+                          Enviar reporte
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </form>

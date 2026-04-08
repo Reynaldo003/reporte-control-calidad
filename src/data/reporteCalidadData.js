@@ -14,6 +14,16 @@ export const DEALER = [
   { value: "VW Poza Rica", label: "VW Poza Rica" },
 ];
 
+export const TECNICO = [
+  { value: "ISRAEL CASTRO", label: "Israel Castro" },
+  { value: "CIRO AUGUSTO PEREZ", label: "Ciro Augusto Perez" },
+  { value: "DIEGO EMETERIO", label: "Diego Emeterio" },
+  { value: "ANGEL SORIANO", label: "Angel Soriano" },
+  { value: "MISSAEL HERNANDEZ", label: "Missael Hernandez" },
+  { value: "BLADIMIR CASTILLO", label: "Bladimir Castillo" },
+  { value: "VICTOR VAZQUEZ", label: "Victor Vazquez" },
+];
+
 export const TIPOS_REPORTE = [
   { value: "control_calidad", label: "Control de calidad" },
   { value: "seguridad", label: "Seguridad" },

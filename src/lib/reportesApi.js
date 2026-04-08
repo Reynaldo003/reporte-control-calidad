@@ -1,11 +1,13 @@
 const API_BASE = (
   import.meta.env.VITE_API_URL || "https://crm.grupoautomotrizryr.com"
-)
-  // import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
-  .replace(/\/+$/, "");
+).replace(/\/+$/, "");
 
 function limpiarTexto(valor) {
-  return String(valor || "").trim();
+  return String(valor ?? "").trim();
+}
+
+function asegurarArreglo(valor) {
+  return Array.isArray(valor) ? valor.filter(Boolean) : [];
 }
 
 function normalizarChecklist(checklist = []) {
@@ -26,15 +28,15 @@ function agregarAdjuntosChecklist(formData, checklist = []) {
     const itemId = limpiarTexto(item.id);
     if (!itemId) return;
 
-    (item.fotos || []).forEach((archivo) => {
+    asegurarArreglo(item.fotos).forEach((archivo) => {
       formData.append(`item_${itemId}_fotos`, archivo);
     });
 
-    (item.videos || []).forEach((archivo) => {
+    asegurarArreglo(item.videos).forEach((archivo) => {
       formData.append(`item_${itemId}_videos`, archivo);
     });
 
-    (item.archivos || []).forEach((archivo) => {
+    asegurarArreglo(item.archivos).forEach((archivo) => {
       formData.append(`item_${itemId}_archivos`, archivo);
     });
   });
@@ -89,7 +91,7 @@ export async function crearReporteCalidad(formulario) {
   const checklistNormalizado = normalizarChecklist(formulario.checklist || []);
   formData.append("checklist", JSON.stringify(checklistNormalizado));
 
-  (formulario.adjuntos_generales || []).forEach((archivo) => {
+  asegurarArreglo(formulario.adjuntos_generales).forEach((archivo) => {
     formData.append("adjuntos_generales", archivo);
   });
 
