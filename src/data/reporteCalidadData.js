@@ -7,6 +7,7 @@ export const PRIORIDADES_REPORTE = [
 ];
 
 export const DEALER = [
+  { value: "", label: "Selecciona una opción" },
   { value: "VW Cordoba", label: "VW Cordoba" },
   { value: "VW Orizaba", label: "VW Orizaba" },
   { value: "VW Tuxpan", label: "VW Tuxpan" },
@@ -15,6 +16,7 @@ export const DEALER = [
 ];
 
 export const TECNICO = [
+  { value: "", label: "Selecciona una opción" },
   { value: "ISRAEL CASTRO", label: "Israel Castro" },
   { value: "CIRO AUGUSTO PEREZ", label: "Ciro Augusto Perez" },
   { value: "DIEGO EMETERIO", label: "Diego Emeterio" },
@@ -25,6 +27,7 @@ export const TECNICO = [
 ];
 
 export const VALIDA = [
+  { value: "", label: "Selecciona una opción" },
   { value: "SI", label: "Si" },
   { value: "NO", label: "No" },
 ];

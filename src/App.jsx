@@ -509,7 +509,12 @@ export default function ReporteCalidadApp() {
     }
 
     if (!limpiarTexto(formulario.tecnico_reparo)) {
-      nuevosErrores.tecnico_reparo = "Ingresa el técnico que reparó.";
+      nuevosErrores.tecnico_reparo = "Selecciona el técnico que reparó.";
+    }
+
+    if (!limpiarTexto(formulario.valido_control_calidad)) {
+      nuevosErrores.valido_control_calidad =
+        "Selecciona si validó control de calidad.";
     }
 
     const erroresChecklist = {};
