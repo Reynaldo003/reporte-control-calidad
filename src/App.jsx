@@ -512,11 +512,6 @@ export default function ReporteCalidadApp() {
       nuevosErrores.tecnico_reparo = "Ingresa el técnico que reparó.";
     }
 
-    if (!limpiarTexto(formulario.valido_control_calidad)) {
-      nuevosErrores.valido_control_calidad =
-        "Ingresa quién validó el control de calidad.";
-    }
-
     const erroresChecklist = {};
 
     formulario.checklist.forEach((item) => {
@@ -675,9 +670,6 @@ export default function ReporteCalidadApp() {
                   <h2 className="text-xl font-semibold text-white">
                     Checklist y evidencias por punto
                   </h2>
-                  <p className="mt-1 text-sm text-white/70">
-                    Cada punto puede llevar sus propias fotos, videos o archivos.
-                  </p>
                 </div>
 
                 <div className="space-y-4">
@@ -760,12 +752,6 @@ export default function ReporteCalidadApp() {
                                 Evidencias del punto
                               </h4>
                             </div>
-
-                            {item.estado === "no" ? (
-                              <div className="text-xs font-semibold text-red-200">
-                                Recomendado adjuntar evidencia del hallazgo
-                              </div>
-                            ) : null}
                           </div>
 
                           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
