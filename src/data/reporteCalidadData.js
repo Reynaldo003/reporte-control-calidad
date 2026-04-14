@@ -24,6 +24,10 @@ export const TECNICO = [
   { value: "MISSAEL HERNANDEZ", label: "Missael Hernandez" },
   { value: "BLADIMIR CASTILLO", label: "Bladimir Castillo" },
   { value: "VICTOR VAZQUEZ", label: "Victor Vazquez" },
+  { value: "JOSE IGNACIO FIGUEROA", label: "Jose Ignacio Figueora" },
+  { value: "CARLOS URIEL ORTEGA", label: "Carlos Uriel Ortega" },
+  { value: "SALVADOR MARTINEZ", label: "Salvador Martínez" },
+  { value: "TOMAS SANCHEZ", label: "Tomás Sánchez" },
 ];
 
 export const VALIDA = [
