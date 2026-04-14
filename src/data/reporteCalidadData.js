@@ -55,70 +55,70 @@ export const ITEMS_REPORTE = [
     titulo: "Verificar plan de asistencia técnica",
     descripcion:
       "Revisar trabajos pendientes de la visita anterior, lo realizado en esta visita y la programación del próximo servicio.",
-    permiteNoAplica: false,
+    permiteNoAplica: true,
   },
   {
     id: "luces",
     titulo: "Verificar correcto estado y funcionamiento de luces",
     descripcion:
       "Validar faros, direccionales, reversa, freno, luces interiores y demás señales del vehículo.",
-    permiteNoAplica: false,
+    permiteNoAplica: true,
   },
   {
     id: "limpiaparabrisas",
     titulo: "Verificar funcionamiento y estado del limpiaparabrisas",
     descripcion:
       "Comprobar condición de gomas y calidad de limpieza, además del pulverizado del lavacristales.",
-    permiteNoAplica: false,
+    permiteNoAplica: true,
   },
   {
     id: "fluidos_bateria",
     titulo: "Verificar niveles de fluido y batería",
     descripcion:
       "Comprobar niveles de aceite, frenos, refrigerante, lavacristales y condición visible de terminales.",
-    permiteNoAplica: false,
+    permiteNoAplica: true,
   },
   {
     id: "puertas_levantacristales",
     titulo: "Verificar puertas y levantacristales",
     descripcion:
       "Comprobar funcionamiento de vidrios y correcta lubricación de puertas.",
-    permiteNoAplica: false,
+    permiteNoAplica: true,
   },
   {
     id: "neumaticos_frenos",
     titulo: "Verificar neumáticos y frenos",
     descripcion:
       "Validar desgaste, daños visibles y condición general de frenado.",
-    permiteNoAplica: false,
+    permiteNoAplica: true,
   },
   {
     id: "bajos_vehiculo",
     titulo: "Verificar bajos del vehículo",
     descripcion:
       "Revisar fugas, fijaciones, tren de rodaje, protección de bajos y escape.",
-    permiteNoAplica: false,
+    permiteNoAplica: true,
   },
   {
     id: "trabajo_realizado",
     titulo: "Verificar trabajo realizado íntegra y correctamente",
     descripcion:
       "Confirmar que la orden fue atendida correctamente y que lo realizado quedó documentado.",
-    permiteNoAplica: false,
+    permiteNoAplica: true,
   },
   {
     id: "formato_mantenimiento",
     titulo: "Verificar formato de mantenimiento",
     descripcion:
       "Confirmar que el formato esté completo, con revisiones y firmas correspondientes.",
-    permiteNoAplica: false,
+    permiteNoAplica: true,
   },
   {
     id: "intervalos_proximo_servicio",
     titulo: "Verificar intervalos de próximo servicio",
     descripcion:
       "Confirmar ajuste del indicador o registro del siguiente servicio.",
-    permiteNoAplica: false,
+    permiteNoAplica: true,
   },
   {
     id: "ampliacion_orden",
@@ -139,7 +139,7 @@ export const ITEMS_REPORTE = [
     titulo: "Verificar eliminación de rastros del trabajo realizado",
     descripcion:
       "Confirmar limpieza exterior e interior del vehículo y ausencia de residuos del trabajo.",
-    permiteNoAplica: false,
+    permiteNoAplica: true,
   },
 ];
 
