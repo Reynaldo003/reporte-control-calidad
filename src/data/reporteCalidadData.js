@@ -28,6 +28,9 @@ export const TECNICO = [
   { value: "CARLOS URIEL ORTEGA", label: "Carlos Uriel Ortega" },
   { value: "SALVADOR MARTINEZ", label: "Salvador Martínez" },
   { value: "TOMAS SANCHEZ", label: "Tomás Sánchez" },
+  { value: "LORENZO BERNARDINO", label: "Lorenzo Bernardino" },
+  { value: "ABEL JIMENEZ", label: "Abel Jiménez" },
+  { value: "GUSTAVO AVALOS", label: "Gustavo Ávalos" },
 ];
 
 export const VALIDA = [
