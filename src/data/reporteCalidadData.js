@@ -31,6 +31,7 @@ export const TECNICO = [
   { value: "LORENZO BERNARDINO", label: "Lorenzo Bernardino" },
   { value: "ABEL JIMENEZ", label: "Abel Jiménez" },
   { value: "GUSTAVO AVALOS", label: "Gustavo Ávalos" },
+  { value: "GERMAN VIVAR LLANOS", label: "Germán Vivar Llanos" },
 ];
 
 export const VALIDA = [
