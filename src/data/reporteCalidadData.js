@@ -32,6 +32,9 @@ export const TECNICO = [
   { value: "ABEL JIMENEZ", label: "Abel Jiménez" },
   { value: "GUSTAVO AVALOS", label: "Gustavo Ávalos" },
   { value: "GERMAN VIVAR LLANOS", label: "Germán Vivar Llanos" },
+  { valie: "ALBERTO PEREZ", label: "Alberto Perez" },
+  { valie: "ALEXIS ANOYA", label: "Alexis Anoya" },
+  { valie: "BENITO BOA", label: "Benito Boa" },
 ];
 
 export const VALIDA = [
