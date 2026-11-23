@@ -36,6 +36,9 @@ export const TECNICO = [
   { valie: "ALEXIS ANOYA", label: "Alexis Anoya" },
   { valie: "BENITO BOA", label: "Benito Boa" },
   { value: "LUIS LICONA", label: "Luis Licona" },
+  { value: "JOSE GABRIEL MENDEZ GONZALEZ", label: "Jose Gabriel Mendez Gonzalez" },
+  { value: "DANIEL MORENO MAYA", label: "Daniel Moreno Maya" },
+  { value: "BENJAMIN MORALES SOBERANES", label: "Benjamin Morales Soberanes" },
 ];
 
 export const VALIDA = [
